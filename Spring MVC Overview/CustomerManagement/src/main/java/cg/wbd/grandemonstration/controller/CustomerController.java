@@ -13,17 +13,9 @@ import java.util.List;
 
 @Controller
 public class CustomerController {
-//    private final CustomerService customerService = CustomerServiceFactory.getInstance();
 
     @Autowired
     private CustomerService customerService;
-//
-//    @GetMapping("/customers")
-//    public String showList(Model model) {
-//        List<Customer> customers = customerService.findAll();
-//        model.addAttribute("customers", customers);
-//        return "customers/list.jsp";
-//    }
 
     @GetMapping("/customers")
     public ModelAndView showList() {
@@ -32,5 +24,4 @@ public class CustomerController {
         modelAndView.addObject("customers", customers);
         return modelAndView;
     }
-
 }
