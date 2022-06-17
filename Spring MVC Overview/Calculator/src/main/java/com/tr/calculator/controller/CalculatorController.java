@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 @Controller
 public class CalculatorController {
@@ -22,7 +23,7 @@ public class CalculatorController {
         BigDecimal result;
         switch (choice) {
             case 1:
-                result = value.divide(new BigDecimal(23000));
+                result = value.divide(new BigDecimal(23000),4, RoundingMode.CEILING);
                 break;
             case 2:
                 result = value.multiply(new BigDecimal(23000));
