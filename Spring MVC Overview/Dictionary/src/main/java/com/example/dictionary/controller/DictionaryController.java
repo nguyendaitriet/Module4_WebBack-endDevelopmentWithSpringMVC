@@ -16,12 +16,12 @@ public class DictionaryController {
 
     @GetMapping("/dictionary")
     public ModelAndView showList() {
-        return new ModelAndView("/views/index.jsp");
+        return new ModelAndView("form");
     }
 
     @PostMapping("/lookup")
     public ModelAndView calculate(@RequestParam String inputWord) {
-        ModelAndView modelAndView = new ModelAndView("/views/index.jsp");
+        ModelAndView modelAndView = new ModelAndView("form");
        String input = inputWord.toLowerCase().trim();
        String result = dictionaryService.lookUp(input);
        modelAndView.addObject("inputWord",inputWord);
