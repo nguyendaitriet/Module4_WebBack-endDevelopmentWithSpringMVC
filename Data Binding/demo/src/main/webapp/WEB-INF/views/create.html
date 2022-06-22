@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Register</title>
+</head>
+<body>
+<div id="form">
+    <h1>Register</h1>
+    <form th:action="@{/createUser}" th:object="${newUser}" method="post">
+        <input type="hidden" th:field="*{id}"/>
+        <div>
+            <label>Name</label>
+            <input type="text" th:field="*{name}"/>
+        </div>
+        <br>
+        <div>
+            <label>Gender</label>
+            <th:block th:each="gender : ${genderList}">
+                <input type="radio" th:value="${gender}" th:text="${gender}" th:field="*{gender}"/>
+            </th:block>
+        </div>
+        <br>
+        <div>
+            <label>Is Admin</label>
+            <input type="checkbox" th:field="*{admin}"/>
+        </div>
+        <br>
+        <div>
+            <label>Hobbies</label>
+            <th:block th:each="hobby : ${hobbyList}">
+                <input type="checkbox" th:value="${hobby}" th:text="${hobby}" th:field="*{hobbies}"/>
+            </th:block>
+        </div>
+        <br>
+        <div>
+            <label>Type</label>
+            <select th:field="*{type}">
+                <option th:each="type : ${typeList}" th:value="${type}" th:text="${type}"></option>
+            </select>
+        </div>
+        <br>
+        <div>
+            <label>Country</label>
+            <select th:field="*{country}">
+                <option th:each="country : ${countryList}" th:value="${country}" th:text="${country}"></option>
+            </select>
+        </div>
+        <br>
+        <input type="submit" value="Save"/>
+    </form>
+</div>
+</body>
+</html>
