@@ -1,7 +1,9 @@
 package com.banking.model;
 
 import javax.persistence.*;
+import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import java.math.BigDecimal;
 import java.util.Date;
@@ -17,8 +19,6 @@ public class Customer {
     private Long id;
 
     @Column(name = "name", length = 200, nullable = false)
-    @NotEmpty
-    @Pattern(regexp = "[A-z \s]")
     private String fullName;
 
     @Column(unique = true, nullable = false)
