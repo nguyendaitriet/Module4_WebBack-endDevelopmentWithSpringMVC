@@ -52,7 +52,7 @@
                             <a title="Edit" th:href="@{/customers/edit/{id}(id=${customer.id})}" class="btn btn-outline-primary">
                                 <i class="fas fa-user-edit"></i>
                             </a>
-                            <a title="Deposit" href="/deposit?id=${customer.getId()}" class="btn btn-outline-secondary">
+                            <a title="Deposit" th:href="@{/deposit/{id}(id=${customer.id})}" class="btn btn-outline-secondary">
                                 <i class="fas fa-plus-circle"></i>
                             </a>
                             <a title="Withdraw" href="/withdraw?id=${customer.getId()}" class="btn btn-outline-success">
@@ -71,6 +71,7 @@
         </table>
     </div>
 </div>
+
 <th:block th:replace="/layout/script :: script"></th:block>
 
 </body>

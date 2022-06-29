@@ -85,7 +85,7 @@ public class CustomerController {
         String email = currentCustomer.getEmail().trim().toLowerCase();
         String address = currentCustomer.getAddress().trim();
 
-        if (ParsingValidationUtils.isLongParsing(id)) {
+        if (ParsingValidationUtils.isLongParsable(id)) {
             long validId = Long.parseLong(id);
             if (customerService.existsByIdAndDeletedFalse(validId)) {
 
@@ -129,7 +129,7 @@ public class CustomerController {
                                         @ModelAttribute("customerDTO") CustomerDTO currentCustomer) {
         ModelAndView modelAndView = new ModelAndView("/suspend");
 
-        if(ParsingValidationUtils.isLongParsing(id)) {
+        if(ParsingValidationUtils.isLongParsable(id)) {
             long validId = Long.parseLong(id);
             if (customerService.existsByIdAndDeletedFalse(validId)) {
                 customerService.suspendCustomer(validId);
@@ -146,7 +146,7 @@ public class CustomerController {
     }
 
     private ModelAndView dispatchRequest(ModelAndView modelAndView, String id) {
-        if (ParsingValidationUtils.isLongParsing(id)) {
+        if (ParsingValidationUtils.isLongParsable(id)) {
             long validId = Long.parseLong(id);
             if (customerService.existsByIdAndDeletedFalse(validId)) {
                 CustomerDTO currentCustomer = customerService.findCustomerDTOById(validId);

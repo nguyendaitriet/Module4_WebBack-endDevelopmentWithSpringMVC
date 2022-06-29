@@ -47,6 +47,10 @@ public class Customer {
     public Customer() {
     }
 
+    public Customer(Long id) {
+        this.id = id;
+    }
+
     public Customer(String fullName, String email, String phone, String address, BigDecimal balance, Date createdAt, long createdBy, Date updatedAt, long updatedBy, boolean deleted) {
         this.fullName = fullName;;
         this.email = email;
@@ -146,19 +150,6 @@ public class Customer {
 
     public void setDeleted(boolean deleted) {
         this.deleted = deleted;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Customer customer = (Customer) o;
-        return id == customer.id && createdBy == customer.createdBy && updatedBy == customer.updatedBy && deleted == customer.deleted && Objects.equals(fullName, customer.fullName) && Objects.equals(email, customer.email) && Objects.equals(phone, customer.phone) && Objects.equals(address, customer.address) && Objects.equals(balance, customer.balance) && Objects.equals(createdAt, customer.createdAt) && Objects.equals(updatedAt, customer.updatedAt);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id, fullName, email, phone, address, balance, createdAt, createdBy, updatedAt, updatedBy, deleted);
     }
 
 }

@@ -24,6 +24,7 @@ public interface ICustomerService extends IGeneralService<Customer> {
     boolean existsByPhone(String phone);
 
     boolean existsByPhoneAndIdIsNot(String phone, long id);
+
     boolean existsByEmailAndIdIsNot(String email, long id);
 
 }

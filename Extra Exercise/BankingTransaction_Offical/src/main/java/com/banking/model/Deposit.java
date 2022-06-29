@@ -1,6 +1,12 @@
 package com.banking.model;
 
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.validator.constraints.Length;
+
+
 import javax.persistence.*;
+import javax.validation.constraints.*;
 import java.math.BigDecimal;
 import java.util.Date;
 
@@ -12,12 +18,23 @@ public class Deposit {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, precision = 12)
+    @NotNull(message = "Transaction amount must NOT be empty.")
+    @Digits(integer = 12, fraction = 0,
+            message = "Maximum digit of transaction amount is 12.")
+    @Min(value = 100,message = "Transaction amount must NOT be LESS than 100.")
+    @Max(value = 50000000,message = "Transaction amount must NOT be GREATER than 50,000,000.")
     private BigDecimal transactionAmount;
 
+    @CreationTimestamp
+    @Column(updatable = false)
     private Date createdAt;
+
     private Long createdBy;
+
+    @UpdateTimestamp
     private Date updatedAt;
+
     private Long updatedBy;
 
     @Column(columnDefinition = "boolean default false")
@@ -39,11 +56,11 @@ public class Deposit {
         this.deleted = deleted;
     }
 
-    public long getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(long id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
@@ -63,11 +80,11 @@ public class Deposit {
         this.createdAt = createdAt;
     }
 
-    public long getCreatedBy() {
+    public Long getCreatedBy() {
         return createdBy;
     }
 
-    public void setCreatedBy(long createdBy) {
+    public void setCreatedBy(Long createdBy) {
         this.createdBy = createdBy;
     }
 
@@ -79,11 +96,11 @@ public class Deposit {
         this.updatedAt = updatedAt;
     }
 
-    public long getUpdatedBy() {
+    public Long getUpdatedBy() {
         return updatedBy;
     }
 
-    public void setUpdatedBy(long updatedBy) {
+    public void setUpdatedBy(Long updatedBy) {
         this.updatedBy = updatedBy;
     }
 
@@ -93,6 +110,14 @@ public class Deposit {
 
     public void setDeleted(boolean deleted) {
         this.deleted = deleted;
+    }
+
+    public Customer getCustomer() {
+        return customer;
+    }
+
+    public void setCustomer(Customer customer) {
+        this.customer = customer;
     }
 }
 
