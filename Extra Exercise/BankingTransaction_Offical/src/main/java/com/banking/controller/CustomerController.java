@@ -1,6 +1,6 @@
 package com.banking.controller;
 
-import com.banking.dto.CustomerDTO;
+import com.banking.model.dto.CustomerDTO;
 import com.banking.service.ICustomerService;
 import com.banking.util.ParsingValidationUtils;
 import org.springframework.beans.factory.annotation.Autowired;

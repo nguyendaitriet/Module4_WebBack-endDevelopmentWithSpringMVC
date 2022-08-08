@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+    <meta charset="UTF-8">
+    <title>CodePen - Slide Sign In/Sign Up form</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.min.css">
+    <link rel="stylesheet" href="/assets/css/loginPage.css">
+
+</head>
+<body>
+<!-- partial:index.partial.html -->
+<div class="container right-panel-active">
+    <!-- Sign Up -->
+    <div class="container__form container--signup">
+        <form action="#" class="form" id="frmRegister">
+            <h2 class="form__title">Sign Up</h2>
+            <input id="usernameReg" type="email" placeholder="Email" class="input" />
+            <input id="passwordReg" type="password" placeholder="Password" class="input" />
+            <select name="role" id="roleOpts" class="input">
+                <option value="1">USER</option>
+                <option value="2">ADMIN</option>
+            </select>
+            <button class="btn" id="btnRegister">Sign Up</button>
+        </form>
+    </div>
+
+    <!-- Sign In -->
+    <div class="container__form container--signin">
+        <form action="#" class="form" id="frmLogin">
+            <h2 class="form__title">Sign In</h2>
+            <input id="usernameLog" type="email" placeholder="Email" class="input" />
+            <input id="passwordLog" type="password" placeholder="Password" class="input" />
+            <a href="#" class="link">Forgot your password?</a>
+            <button class="btn" id="btnLogin">Sign In</button>
+        </form>
+    </div>
+
+    <!-- Overlay -->
+    <div class="container__overlay">
+        <div class="overlay">
+            <div class="overlay__panel overlay--left">
+                <button class="btn" id="signIn">To Sign In</button>
+            </div>
+            <div class="overlay__panel overlay--right">
+                <button class="btn" id="signUp">To Sign Up</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- partial -->
+<script src="/assets/js/jquery-3.6.0.min.js"></script>
+<script src="/assets/js/jquery.validate.min.js"></script>
+<script  src="/assets/js/loginPage.js"></script>
+<script src="/assets/js/icheck.min.js"></script>
+<script src="/assets/js/notify-0.4.1.min.js"></script>
+<script src="/assets/js/app.js"></script>
+
+<script>
+
+    let page = {
+        urls: {
+            register: App.BASE_URL_AUTH + "/register",
+            login: App.BASE_URL_AUTH + "/login"
+        },
+        element: {},
+        commands: {}
+    }
+
+    page.element.formLogin = $("#frmLogin");
+    page.element.userLog = $("#usernameLog");
+    page.element.passLog = $("#passwordLog");
+
+    page.element.formRegister = $("#frmRegister");
+    page.element.userReg = $("#usernameReg");
+    page.element.passReg = $("#passwordReg");
+
+    page.element.roleOtps = $("#roleOpts");
+
+    page.element.btnLogin = $("#btnLogin");
+    page.element.btnRegister = $("#btnRegister");
+
+    page.commands.login = () => {
+        let user = {
+            username: page.element.userLog.val(),
+            password: page.element.passLog.val()
+        }
+
+        $.ajax({
+            type: "POST",
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            url: page.urls.login,
+            data: JSON.stringify(user)
+        })
+        .done((resp) => {
+            $.notify("Logged in successfully!", "success");
+            setTimeout(function () {
+                window.location.href = "/customers";
+            }, 1000);
+        })
+        .fail( function() {
+            $.notify("The account or password is incorrect, please check the information again", "error");
+        });
+    }
+
+
+    page.commands.register = () => {
+
+        let user = {
+            username: page.element.userReg.val().trim(),
+            password: page.element.passReg.val(),
+            role: {
+                id: page.element.roleOtps.val(),
+            }
+        }
+
+        $.ajax({
+            type: "POST",
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            url: page.urls.register,
+            data: JSON.stringify(user)
+        })
+        .done(() => {
+            $.notify("Successful account registration !", "success");
+        })
+        .fail( function(jqXHR) {
+            page.element.formLogin[0].reset();
+
+            if (jqXHR.responseJSON) {
+                if (jqXHR.responseJSON.message) {
+                    $.notify(jqXHR.responseJSON.message, "error");
+                } else {
+                    $.each( jqXHR.responseJSON, function( key, value ) {
+                        $.notify(value, "error");
+                    });
+                }
+            } else {
+                $.notify("Something went wrong, please try again", "error");
+            }
+        });
+    }
+
+    page.initializeControlEvent = () => {
+
+        page.element.btnLogin.on("click", function() {
+            page.commands.login();
+        });
+
+        page.element.btnRegister.on("click", function() {
+            page.commands.register();
+        });
+
+        $(function () {
+            $('input').iCheck({
+                checkboxClass: 'icheckbox_square-blue',
+                radioClass: 'iradio_square-blue',
+                increaseArea: '20%'
+            });
+        });
+
+    }
+
+    $(function () {
+        page.initializeControlEvent();
+    });
+
+</script>
+</body>
+</html>

@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Index</title>
+    <th:block th:replace="/layout/head :: head"></th:block>
+</head>
+
+<body>
+<div class="container-fluid">
+
+    <div class="row mt-3 mb-3">
+        <div class="col-xl-6">
+            <h1>Customer Information</h1>
+        </div>
+        <div class="col-xl-3">
+            <a href="/transfers" id="btnShowTransferInfo" class="col-xl-12 btn btn-outline-warning">
+                <h5>
+                    <i class="fa-solid fa-file-lines"></i>
+                    Transfer Information
+                </h5>
+            </a>
+        </div>
+        <div class="col-xl-3">
+            <button id="btnShowCreate" type="button" class="col-xl-12 btn btn-outline-primary">
+                <h5>
+                    <i class="fa-solid fa-user-plus"></i>
+                    Create New Customer
+                </h5>
+            </button>
+        </div>
+    </div>
+
+    <table class="table table-hover" id="tbCustomer">
+
+        <thead class="text-center">
+        <tr>
+            <th scope="col">#</th>
+            <th scope="col">FullName</th>
+            <th scope="col">Email</th>
+            <th scope="col">Phone</th>
+            <th scope="col">Balance</th>
+            <th scope="col">Province</th>
+            <th scope="col">District</th>
+            <th scope="col">Ward</th>
+            <th scope="col">Address</th>
+            <th scope="col" colspan="5">Action</th>
+        </tr>
+        </thead>
+
+        <tbody>
+
+        </tbody>
+
+    </table>
+</div>
+
+<th:block th:replace="/customer/modal :: modal_create"></th:block>
+<th:block th:replace="/customer/modal :: modal_edit"></th:block>
+<th:block th:replace="/customer/modal :: modal_deposit"></th:block>
+<th:block th:replace="/customer/modal :: modal_withdraw"></th:block>
+<th:block th:replace="/customer/modal :: modal_transfer"></th:block>
+<th:block th:replace="/customer/modal :: modal_suspend"></th:block>
+<th:block th:replace="/layout/script :: script"></th:block>
+
+<script>
+    let customers = [];
+    let customer = new Customer();
+    let recipients = [];
+    let customerLocation = new Address();
+    let newDeposit = new Deposit();
+    let newWithdraw = new Withdraw();
+    let newTransfer = new Transfer();
+    let fees = 10;
+
+    function loadCustomers() {
+        $.ajax({
+            type: "GET",
+            url: "http://localhost:8080/api/customers/list"
+        })
+        .done((data) => {
+            console.log(data)
+            customers = data;
+            $.each(data, (i, item) => {
+                console.log(item)
+                let str = getRow(item);
+                $("#tbCustomer tbody").prepend(str);
+                handleRowBtn();
+
+            });
+        })
+            .fail(function (jqXHR) {
+                console.log(jqXHR);
+            })
+    }
+
+
+
+    $("#btnShowCreate").on("click", () => {
+        customer.location = new Address();
+        customer.location.provinceId = "01";
+        renderLocationOptions(`Cre`);
+        $("#mdCreate").modal("show");
+    })
+
+    $("#btnCreate").on("click", () => {
+        $('#frmCreate').submit();
+    })
+
+    function doCreate() {
+
+        delete customer.id;
+        customer.fullName = $("#fullNameCre").val().trim();
+        customer.email = $("#emailCre").val().trim().toLowerCase();
+        customer.phone = $("#phoneCre").val().trim();
+        customer.balance = 0;
+
+        customerLocation.provinceId = $("#provinceCre").val();
+        customerLocation.provinceName= $("#provinceCre option:selected").text();
+        customerLocation.districtId = $("#districtCre").val();
+        customerLocation.districtName= $("#districtCre option:selected").text();
+        customerLocation.wardId = $("#wardCre").val();
+        customerLocation.wardName= $("#wardCre option:selected").text();
+        customerLocation.address = $("#addressCre").val();
+
+        customer.location = customerLocation;
+
+        $("#mdCreate .modal-alert-danger").removeClass('show').addClass('hide').empty();
+
+        $.ajax({
+            headers: {
+                "accept": "application/json",
+                "content-type": "application/json"
+            },
+            type: "POST",
+            url: "http://localhost:8080/api/customers/create",
+            data: JSON.stringify(customer)
+        })
+        .done((data) => {
+
+            console.log(data);
+
+            let str = getRow(data);
+
+            $("#tbCustomer tbody").prepend(str);
+
+            $("#frmCreate")[0].reset();
+
+            $("#mdCreate").modal("hide");
+
+            handleRowBtn();
+
+            showSuccessMessage();
+
+        })
+        .fail(function (jqXHR) {
+
+            console.log(jqXHR);
+
+            let str='';
+
+            if (jqXHR.responseJSON) {
+                $.each(jqXHR.responseJSON, (key,value) => {
+                    str += `<label id="${key}-error" class="error" for="${key}Cre">${value}</label>`
+                })
+
+                $("#mdCreate .modal-alert-danger").removeClass('hide').addClass('show').append(str);
+            }
+            else {
+                let str = `<label id="message-error" class="error">${jqXHR.responseText}</label>`
+                $("#mdCreate .modal-alert-danger").removeClass('hide').addClass('show').append(str);
+            }
+        })
+    }
+
+    $("#btnEdit").on("click", function () {
+
+        $('#frmEdit').submit();
+
+    })
+
+    function doEdit() {
+
+        customer.fullName = $("#fullNameUp").val();
+        customer.email = $("#emailUp").val();
+        customer.phone = $("#phoneUp").val();
+        customerLocation.provinceId = $("#provinceUp").val();
+        customerLocation.provinceName= $("#provinceUp option:selected").text();
+        customerLocation.districtId = $("#districtUp").val();
+        customerLocation.districtName= $("#districtUp option:selected").text();
+        customerLocation.wardId = $("#wardUp").val();
+        customerLocation.wardName= $("#wardUp option:selected").text();
+        customerLocation.address = $("#addressUp").val();
+
+        customer.location = customerLocation;
+
+        $("#mdEdit .modal-alert-danger").removeClass('show').addClass('hide').empty();
+
+        return $.ajax({
+            headers: {
+                "accept": "application/json",
+                "content-type": "application/json"
+            },
+            type: "PUT",
+            url: "http://localhost:8080/api/customers/update/" + customer.id,
+            data: JSON.stringify(customer)
+        })
+        .done((data) => {
+
+            customer = data;
+
+            updateRow(data);
+
+            handleRowBtn();
+
+            $("#mdEdit").modal("hide");
+            showSuccessMessage();
+
+        })
+        .fail((jqXHR) => {
+
+            console.log(jqXHR);
+
+            let str='';
+
+            if (jqXHR.responseJSON) {
+                $.each(jqXHR.responseJSON, (key,value) => {
+                    str += `<label id="${key}-error" class="error" for="${key}Up">${value}</label>`
+                })
+
+                $("#mdEdit .modal-alert-danger").removeClass('hide').addClass('show').append(str);
+            }
+            else {
+                let str = `<label id="message-error" class="error">${jqXHR.responseText}</label>`
+                $("#mdEdit .modal-alert-danger").removeClass('hide').addClass('show').append(str);
+            }
+        })
+    }
+
+    $("#btnDeposit").on("click", function () {
+
+        $('#frmDeposit').submit();
+
+    })
+
+    function doDeposit() {
+
+        let transactionAmount = $("#transactionAmountDep").val();
+        newDeposit.transactionAmount = transactionAmount;
+
+        $("#mdDeposit .modal-alert-danger").removeClass('show').addClass('hide').empty();
+
+        $.ajax({
+            headers: {
+                "accept": "application/json",
+                "content-type": "application/json"
+            },
+            type: "PUT",
+            url: "http://localhost:8080/api/deposits/" + customer.id,
+            data: JSON.stringify(newDeposit)
+        })
+        .done((data) => {
+
+            customer = data;
+
+            updateRow(data);
+
+            handleRowBtn();
+
+            $("#mdDeposit").modal("hide");
+
+            showSuccessMessage();
+
+        })
+        .fail((jqXHR) => {
+
+            console.log(jqXHR);
+
+            let str='';
+
+            if (jqXHR.responseJSON) {
+                $.each(jqXHR.responseJSON, (key,value) => {
+                    str += `<label id="${key}-error" class="error" for="${key}Dep">${value}</label>`
+                })
+
+                $("#mdDeposit .modal-alert-danger").removeClass('hide').addClass('show').append(str);
+            }
+            else {
+                let str = `<label id="message-error" class="error">${jqXHR.responseText}</label>`
+                $("#mdDeposit .modal-alert-danger").removeClass('hide').addClass('show').append(str);
+            }
+
+        })
+    }
+
+    $("#btnWithdraw").on("click", function () {
+
+        $('#frmWithdraw').submit();
+
+    })
+
+    function doWithdraw() {
+
+        let transactionAmount = +$("#transactionAmountWit").val();
+        newWithdraw.transactionAmount = transactionAmount;
+
+        $("#mdWithdraw .modal-alert-danger").removeClass('show').addClass('hide').empty();
+
+        $.ajax({
+            headers: {
+                "accept": "application/json",
+                "content-type": "application/json"
+            },
+            type: "POST",
+            url: "http://localhost:8080/api/withdraws/" + customer.id,
+            data: JSON.stringify(newWithdraw)
+        })
+        .done((data) => {
+
+            customer = data;
+
+            updateRow(data);
+
+            handleRowBtn();
+
+            $("#mdWithdraw").modal("hide");
+
+            showSuccessMessage();
+
+        })
+        .fail((jqXHR) => {
+
+            console.log(jqXHR);
+
+            let str='';
+
+            if (jqXHR.responseJSON) {
+                $.each(jqXHR.responseJSON, (key,value) => {
+                    str += `<label id="${key}-error" class="error" for="${key}Wit">${value}</label>`
+                })
+
+                $("#mdWithdraw .modal-alert-danger").removeClass('hide').addClass('show').append(str);
+            }
+            else {
+                let str = `<label id="message-error" class="error">${jqXHR.responseText}</label>`
+                $("#mdWithdraw .modal-alert-danger").removeClass('hide').addClass('show').append(str);
+            }
+        })
+    }
+
+    // let transferAmount = + $("#transferAmount").val();
+    // let feesAmount = transferAmount*fees/100;
+    // let totalAmount = transferAmount + feesAmount;
+    let totalAmount = 0;
+
+    $("#transferAmount").on("input", function () {
+        let transferAmount = + $("#transferAmount").val();
+        let feesAmount = Math.round(transferAmount*fees/100);
+        totalAmount = transferAmount + feesAmount;
+        $("#totalAmount").val(totalAmount);
+    })
+
+    $("#btnTransfer").on("click", function () {
+
+        $('#frmTransfer').submit();
+
+    })
+
+    function doTransfer() {
+
+        newTransfer.transferAmount =  $("#transferAmount").val();
+        newTransfer.recipientId =  $("#recipientId").val();
+        newTransfer.senderId =  $("#senderId").val();
+
+        $("#mdTransfer .modal-alert-danger").removeClass('show').addClass('hide').empty();
+
+        $.ajax({
+            headers: {
+                "accept": "application/json",
+                "content-type": "application/json"
+            },
+            type: "PUT",
+            url: "http://localhost:8080/api/transfers/",
+            data: JSON.stringify(newTransfer)
+        })
+        .done((data) => {
+
+            updateRow(data.sender);
+
+            updateRow(data.recipient);
+
+            handleRowBtn();
+
+            $("#mdTransfer").modal("hide");
+
+            showSuccessMessage();
+
+        })
+        .fail((jqXHR) => {
+
+            console.log(jqXHR);
+
+            let str='';
+
+            if (jqXHR.responseJSON) {
+                $.each(jqXHR.responseJSON, (key,value) => {
+                    str += `<label id="${key}-error" class="error" for="${key}">${value}</label>`
+                })
+
+                $("#mdTransfer .modal-alert-danger").removeClass('hide').addClass('show').append(str);
+            }
+            else {
+                let str = `<label id="message-error" class="error">${jqXHR.responseText}</label>`
+                $("#mdTransfer .modal-alert-danger").removeClass('hide').addClass('show').append(str);
+            }
+        })
+
+    }
+
+
+    $("#btnSuspend").on("click", () => {
+        $.ajax({
+            type: "GET",
+            url: "http://localhost:8080/api/customers/suspend/" + customer.id
+        })
+        .done((data) => {
+            let currentRow = $("#tr_" + data.id);
+            currentRow.remove();
+            $("#mdSuspend").modal("hide");
+            showSuccessMessage();
+        })
+        .fail((err) => {
+            alert("Suspend failed!");
+        })
+    })
+
+
+
+    function handleBtnSuspend() {
+        $(".suspend").on("click", function () {
+            let id = $(this).data("id");
+            findById(id);
+        })
+    }
+
+    function handleBtnDeposit() {
+        $(".deposit").on("click", function () {
+
+            let id = $(this).data("id");
+
+            findById(id).then(() => {
+                $("#fullNameDep").val(customer.fullName);
+                $("#emailDep").val(customer.phone);
+                $("#balanceDep").val(customer.balance);
+                $("#mdDeposit").modal("show");
+            });
+        })
+    }
+
+    function handleBtnEdit() {
+        //Must not use arrow function here
+        $(".edit").on("click", function () {
+
+            let id = $(this).data("id");
+
+            //"then" excute findById with .done
+            findById(id).then(() => {
+
+                $("#fullNameUp").val(customer.fullName);
+                $("#emailUp").val(customer.email);
+                $("#phoneUp").val(customer.phone);
+                $("#addressUp").val(customer.location.address);
+                $("#mdEdit").modal("show");
+                renderLocationOptions("Up");
+
+            });
+        })
+    }
+
+    function handleBtnWithdraw() {
+        $(".withdraw").on("click", function () {
+
+            let id = $(this).data("id");
+
+            findById(id).then(() => {
+                $("#fullNameWit").val(customer.fullName);
+                $("#emailWit").val(customer.phone);
+                $("#balanceWit").val(customer.balance);
+                $("#mdWithdraw").modal("show");
+            });
+
+        })
+    }
+
+    function handleBtnTransfer() {
+        $(".transfer").on("click", function () {
+
+            let id = $(this).data("id");
+
+            findById(id).then(() => {
+                $("#senderId").val(customer.id);
+                $("#senderName").val(customer.fullName);
+                $("#senderEmail").val(customer.email);
+                $("#senderBalance").val(customer.balance);
+                $("#fees").val(fees);
+                $("#mdTransfer").modal("show");
+                renderRecipients();
+            });
+
+        })
+    }
+
+    function handleRowBtn() {
+        handleBtnEdit();
+        handleBtnSuspend();
+        handleBtnDeposit();
+        handleBtnWithdraw();
+        handleBtnTransfer();
+    }
+
+    function updateRow(data) {
+        let str = getRow(data);
+        let currentRow = $("#tr_" + data.id);
+        currentRow.replaceWith(str);
+    }
+
+    function getRow(data) {
+        return `
+                <tr id="tr_${data.id}">
+                        <th scope="row">${data.id}</th>
+                        <td>${data.fullName}</td>
+                        <td>${data.email}</td>
+                        <td>${data.phone}</td>
+                        <td>${data.balance}</td>
+                        <td>${data.location.provinceName}</td>
+                        <td>${data.location.districtName}</td>
+                        <td>${data.location.wardName}</td>
+                        <td>${data.location.address}</td>
+                        <td>
+                            <button title="Edit" class="btn btn-outline-info edit" data-id="${data.id}">
+                                <i class="fa-solid fa-user-pen"></i>
+                            </button>
+                        </td>
+                        <td>
+                            <button title="Deposit" class="btn btn-outline-success deposit" data-id="${data.id}">
+                                <i class="fa-solid fa-plus"></i>
+                            </button>
+                        </td>
+                        <td>
+                            <button title="Withdraw" class="btn btn-outline-secondary withdraw" data-id="${data.id}">
+                                <i class="fa-solid fa-minus"></i>
+                            </button>
+                        </td>
+                        <td>
+                            <button title="Transfer" class="btn btn-outline-warning transfer" data-id="${data.id}">
+                                <i class="fa-solid fa-arrow-right-arrow-left"></i>
+                            </button>
+                        </td>
+                        <td>
+                            <button title="Suspend" class="btn btn-outline-danger suspend" data-id="${data.id}" data-bs-toggle="modal" data-bs-target="#mdSuspend">
+                                <i class="fa-solid fa-ban"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+    }
+
+    function findById(id) {
+        return $.ajax({
+            type: "GET",
+            url: "http://localhost:8080/api/customers/" + id
+        })
+        .done((data) => {
+            customer = data;
+        })
+        .fail(() => {
+            App.SweetAlert.showErrorAlert("Customer not found!");
+        })
+    }
+
+    function getRecipients() {
+        return $.ajax({
+            type: "GET",
+            url: "http://localhost:8080/api/transfers/recipients/" + customer.id
+        })
+        .done((data) => {
+            recipients = data;
+        })
+        .fail((err) => {
+            alert("Recipients not found!");
+        })
+    }
+
+    function renderRecipients() {
+
+        getRecipients().then( () => {
+
+            $("#recipientId").empty();
+
+            $.each(recipients, (i, item) => {
+                let str = `<option value="${item.id}">(${item.id}) ${item.fullName}</option>`;
+                $("#recipientId").append(str);
+            })
+
+        })
+    }
+
+    function showSuccessMessage() {
+        swal("Successful operation!", " ", "success", {
+            timer: 1200,
+            button: false
+        });
+    }
+
+    // ANOTHER WAY
+    // function addInfoToModal(id) {
+    //     let currentCustomer = customers.find(x => x.id === id);
+
+    //     $(`#btnEdit-${id}`).on("click", () => {
+    //         $("#fullNameUp").val(currentCustomer.fullName);
+    //         $("#emailUp").val(currentCustomer.phone);
+    //         $("#phoneUp").val(currentCustomer.email);
+    //         $("#addressUp").val(currentCustomer.address);
+    //     })
+    // }
+
+    $('#frmCreate').validate({
+        onkeyup: function(element) { $(element).valid() },
+        onclick: false,
+        onfocusout: false,
+        // rules: {
+        //     fullName: {
+        //         required: true,
+        //         namePattern: true,
+        //         minlength: 3,
+        //         maxlength: 50
+        //     },
+        //     email: {
+        //         required: true,
+        //         email: true,
+        //         minlength: 10,
+        //         maxlength: 50,
+        //     },
+        //     address: {
+        //         required: false,
+        //         minlength: 3,
+        //         maxlength: 150
+        //     },
+        //     phone: {
+        //         required: true,
+        //         phonePattern: true,
+        //         minlength: 9,
+        //         maxlength: 20,
+        //     }
+        // },
+        // messages: {
+        //     fullName: {
+        //         required: "Name must NOT be empty.",
+        //         minlength: $.validator.format("Min character of name: {0}."),
+        //         maxlength: $.validator.format("Max character of name: {0}.")
+        //     },
+        //     email: {
+        //         required: "Email address must NOT be empty.",
+        //         email: "Invalid email address format.",
+        //         minlength: $.validator.format("Min character of email: {0}."),
+        //         maxlength: $.validator.format("Min character of email: {0}."),
+        //     },
+        //     address: {
+        //         minlength: $.validator.format("Min character of address: {0}."),
+        //         maxlength: $.validator.format("Min character of address: {0}."),
+        //     },
+        //     phone: {
+        //         required: "Phone number must NOT be empty.",
+        //         minlength: $.validator.format("Min character of phone number: {0}."),
+        //         maxlength: $.validator.format("Max character of phone number: {0}.")
+        //     }
+        // },
+        // errorLabelContainer: '#mdCreate .modal-alert-danger',
+        // errorPlacement: function(error, element){
+        //     error.appendTo("#mdCreate .modal-alert-danger").removeClass('hide').addClass('show');
+        // },
+        // showErrors: function(errorMap, errorList) {
+        //     if (this.numberOfInvalids() > 0) {
+        //         $("#mdCreate .modal-alert-danger").removeClass('hide').addClass('show');
+        //     } else {
+        //         $("#mdCreate .modal-alert-danger").removeClass('show').addClass('hide').empty();
+        //         $("#frmCreate input.error").removeClass("error");
+        //     }
+        //     this.defaultShowErrors();
+        // },
+        submitHandler: function() {
+            doCreate();
+        }
+    });
+
+    $('#frmEdit').validate({
+        onkeyup: function(element) { $(element).valid() },
+        onclick: false,
+        onfocusout: false,
+        // rules: {
+        //     fullName: {
+        //         required: true,
+        //         namePattern: true,
+        //         minlength: 3,
+        //         maxlength: 50
+        //     },
+        //     email: {
+        //         required: true,
+        //         email: true,
+        //         minlength: 10,
+        //         maxlength: 50
+        //     },
+        //     address: {
+        //         required: false,
+        //         minlength: 3,
+        //         maxlength: 150
+        //     },
+        //     phone: {
+        //         required: true,
+        //         phonePattern: true,
+        //         minlength: 9,
+        //         maxlength: 20
+        //     }
+        // },
+        // messages: {
+        //     fullName: {
+        //         required: "Name must NOT be empty.",
+        //         minlength: $.validator.format("Min character of name: {0}."),
+        //         maxlength: $.validator.format("Max character of name: {0}.")
+        //     },
+        //     email: {
+        //         required: "Email address must NOT be empty.",
+        //         email: "Invalid email address format.",
+        //         minlength: $.validator.format("Min character of email: {0}."),
+        //         maxlength: $.validator.format("Min character of email: {0}."),
+        //     },
+        //     address: {
+        //         minlength: $.validator.format("Min character of address: {0}."),
+        //         maxlength: $.validator.format("Min character of address: {0}."),
+        //     },
+        //     phone: {
+        //         required: "Phone number must NOT be empty.",
+        //         minlength: $.validator.format("Min character of phone number: {0}."),
+        //         maxlength: $.validator.format("Max character of phone number: {0}.")
+        //     }
+        // },
+        // errorLabelContainer: '#mdEdit .modal-alert-danger',
+        // errorPlacement: function(error, element){
+        //     error.appendTo("#mdEdit .modal-alert-danger").removeClass('hide').addClass('show');
+        // },
+        // showErrors: function(errorMap, errorList) {
+        //     if (this.numberOfInvalids() > 0) {
+        //         $("#mdEdit .modal-alert-danger").removeClass('hide').addClass('show');
+        //     } else {
+        //         $("#mdEdit .modal-alert-danger").removeClass('show').addClass('hide').empty();
+        //         $("#frmEdit input.error").removeClass("error");
+        //     }
+        //     this.defaultShowErrors();
+        // },
+        submitHandler: function() {
+            doEdit();
+        }
+    });
+
+    $('#frmDeposit').validate({
+        onkeyup: function(element) { $(element).valid() },
+        onclick: false,
+        onfocusout: false,
+        // rules: {
+        //     transactionAmountDep:{
+        //         required: true,
+        //         number: true,
+        //         min: 100,
+        //         max: 20000000,
+        //         maxlength: 12
+        //     }
+        // },
+        // messages: {
+        //     transactionAmountDep:{
+        //         required: "Transaction amount must NOT be empty.",
+        //         number: "Invalid transaction amount.",
+        //         min: $.validator.format("Transaction amount must NOT be less than {0}."),
+        //         max: $.validator.format("Transaction amount must NOT be greater than {0}."),
+        //         maxlength: $.validator.format("Max character of transaction amount: {0}.")
+        //     }
+        // },
+        // errorLabelContainer: '#mdDeposit .modal-alert-danger',
+        // errorPlacement: function(error, element){
+        //     error.appendTo("#mdDeposit .modal-alert-danger").removeClass('hide').addClass('show');
+        // },
+        // showErrors: function(errorMap, errorList) {
+        //     if (this.numberOfInvalids() > 0) {
+        //         $("#mdDeposit .modal-alert-danger").removeClass('hide').addClass('show');
+        //     } else {
+        //         $("#mdDeposit .modal-alert-danger").removeClass('show').addClass('hide').empty();
+        //         $("#frmDeposit input.error").removeClass("error");
+        //     }
+        //     this.defaultShowErrors();
+        // },
+        submitHandler: function() {
+            doDeposit();
+        }
+    })
+
+    $('#frmWithdraw').validate({
+        onkeyup: function(element) { $(element).valid() },
+        onclick: false,
+        onfocusout: false,
+        // rules: {
+        //     transactionAmountWit:{
+        //         required: true,
+        //         number: true,
+        //         min: 100,
+        //         maxlength: 12
+        //     }
+        // },
+        // messages: {
+        //     transactionAmountWit:{
+        //         required: "Transaction amount must NOT be empty.",
+        //         number: "Invalid transaction amount.",
+        //         min: $.validator.format("Transaction amount must NOT be less than {0}."),
+        //         maxlength: $.validator.format("Max character of transaction amount: {0}.")
+        //     }
+        // },
+        // errorLabelContainer: '#mdWithdraw .modal-alert-danger',
+        // errorPlacement: function(error, element){
+        //     error.appendTo("#mdWithdraw .modal-alert-danger").removeClass('hide').addClass('show');
+        // },
+        // showErrors: function(errorMap, errorList) {
+        //     if (this.numberOfInvalids() > 0) {
+        //         $("#mdWithdraw .modal-alert-danger").removeClass('hide').addClass('show');
+        //     } else {
+        //         $("#mdWithdraw .modal-alert-danger").removeClass('show').addClass('hide').empty();
+        //         $("#frmWithdraw input.error").removeClass("error");
+        //     }
+        //     this.defaultShowErrors();
+        // },
+        submitHandler: function() {
+            doWithdraw();
+        }
+    })
+
+    $('#frmTransfer').validate({
+        onkeyup: function(element) { $(element).valid() },
+        onclick: false,
+        onfocusout: false,
+        // rules: {
+        //     senderId: {
+        //         required: true,
+        //         number: true,
+        //         validSenderId: true
+        //     },
+        //     recipient: {
+        //         required: true,
+        //         number: true
+        //     },
+        //     transferAmount:{
+        //         required: true,
+        //         number: true,
+        //         min: 100
+        //         maxlength: 12
+        //     },
+        //     totalAmount: {
+        //         required: true,
+        //         number: true
+        //         maxlength: 12
+        //     }
+        // },
+        // messages: {
+        //     senderId: {
+        //         required: "Sender ID must NOT be empty.",
+        //         number: "Invalid sender ID",
+        //     },
+        //     recipient: {
+        //         required: "Recipient ID must NOT be empty.",
+        //         number: "Invalid recipient ID"
+        //     },
+        //     transferAmount:{
+        //         required: "Transaction amount must NOT be empty.",
+        //         number: "Invalid transaction amount.",
+        //         min: $.validator.format("Transaction amount must NOT be less than {0}."),
+        //         maxlength: $.validator.format("Max character of transaction amount: {0}.")
+        //     },
+        //     totalAmount: {
+        //         required: "Total amount must NOT be empty.",
+        //         number: "Invalid total amount.",
+        //         maxlength: $.validator.format("Max character of total amount: {0}.")
+        //     }
+        // },
+        // errorLabelContainer: '#mdTransfer .modal-alert-danger',
+        // errorPlacement: function(error, element){
+        //     error.appendTo("#mdTransfer .modal-alert-danger").removeClass('hide').addClass('show');
+        // },
+        // showErrors: function(errorMap, errorList) {
+        //     if (this.numberOfInvalids() > 0) {
+        //         $("#mdTransfer .modal-alert-danger").removeClass('hide').addClass('show');
+        //     } else {
+        //         $("#mdTransfer .modal-alert-danger").removeClass('show').addClass('hide').empty();
+        //         $("#frmTransfer input.error").removeClass("error");
+        //     }
+        //     this.defaultShowErrors();
+        // },
+        submitHandler: function() {
+            doTransfer();
+        }
+    })
+
+    $.validator.addMethod("namePattern", function(value, element) {
+        return this.optional(element) || /[A-Z a-z \s]/.test( value );
+    }, "Name contains only letters or whitespaces.");
+
+    $.validator.addMethod("phonePattern", function(value, element) {
+        return this.optional(element) || /^(\+\d{1,2}\s)?\(?\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}$/.test(value);
+    }, "Incorrect phone number format. Correct format: +1 (608) 468-6527.");
+
+    $.validator.addMethod("validSenderId", function(value, element) {
+            return this.optional(element) || (value == customer.id);
+        },
+        "Sender ID must NOT be changed.")
+
+
+
+    $("#provinceCre").change(function () {
+        let suffix = `Cre`;
+        changeDistrictAndWard(suffix);
+    })
+
+    $("#districtCre").change(function () {
+        let suffix = `Cre`;
+        changeWard(suffix);
+    })
+
+
+    $("#provinceUp").change(function () {
+        let suffix = `Up`;
+        changeDistrictAndWard(suffix);
+    })
+
+    $("#districtUp").change(function () {
+        let suffix = `Up`;
+        changeWard(suffix);
+    })
+
+
+    function renderLocationOptions(suffix) {
+        let provinceId = customer.location.provinceId;
+        getProvinceList(suffix, provinceId).then(() => {
+            changeDistrictAndWard(suffix);
+        });
+    }
+
+    function changeDistrictAndWard(suffix) {
+        let provinceId = $(`#province${suffix}`).val();
+        let districtId = customer.location.districtId;
+        getDistrictList(provinceId, suffix, districtId).then(() => {
+             changeWard(suffix);
+        })
+    }
+
+    function changeWard(suffix) {
+        let districtId = $(`#district${suffix}`).val();
+        let wardId = customer.location.wardId;
+        getWardList(districtId, suffix, wardId);
+    }
+
+    function getProvinceList(suffix, provinceId) {
+        return $.ajax({
+            type: "GET",
+            url: "https://vapi.vnappmob.com/api/province"
+        })
+        .done((data) => {
+            let provinceList = data.results;
+            $(`#province${suffix}`).empty();
+
+            $.each(provinceList, (i, item) => {
+                let str = `<option value="${item.province_id}" ${provinceId == item.province_id ? "selected" : ""}>${item.province_name}</option>`;
+                $(`#province${suffix}`).prepend(str);
+            });
+        })
+        .fail(() => {
+            App.SweetAlert.showErrorAlert("No province found!")
+        })
+    }
+
+    function getDistrictList(provinceId, suffix, districtId) {
+        return $.ajax({
+            type: "GET",
+            url: "https://vapi.vnappmob.com/api/province/district/" + provinceId
+        })
+        .done((data) => {
+
+            let districtList = data.results;
+            $(`#district${suffix}`).empty();
+
+            $.each(districtList, (i, item) => {
+                let str = `<option value="${item.district_id}" ${districtId == item.district_id ? "selected" : ""}>${item.district_name}</option>`;
+                $(`#district${suffix}`).prepend(str);
+            });
+        })
+        .fail(() => {
+            App.SweetAlert.showErrorAlert("No district found!")
+        })
+    }
+
+    function getWardList(districtId, suffix, wardId) {
+        return $.ajax({
+            type: "GET",
+            url: "https://vapi.vnappmob.com/api/province/ward/" + districtId
+        })
+        .done((data) => {
+            let wardList = data.results;
+            $(`#ward${suffix}`).empty();
+
+            $.each(wardList, (i, item) => {
+                let str = `<option value="${item.ward_id}" ${wardId == item.ward_id ? "selected" : ""}>${item.ward_name}</option>`;
+                $(`#ward${suffix}`).prepend(str);
+            });
+        })
+        .fail(() => {
+            App.SweetAlert.showErrorAlert("No ward found!")
+        })
+    }
+
+    $("#mdCreate").on("hidden.bs.modal", function () {
+        $("#mdCreate .modal-alert-danger").empty();
+        $("#mdCreate .modal-alert-danger").addClass("hide");
+        $("#mdCreate .modal-alert-danger").removeClass("show");
+        $("#frmCreate input.error").removeClass("error");
+        $("#frmCreate")[0].reset();
+        $("#frmCreate").validate().resetForm();
+    })
+
+    $("#mdEdit").on("hidden.bs.modal", function () {
+        $("#mdEdit .modal-alert-danger").empty();
+        $("#mdEdit .modal-alert-danger").addClass("hide");
+        $("#mdEdit .modal-alert-danger").removeClass("show");
+        $("#frmEdit input.error").removeClass("error");
+        $("#frmEdit")[0].reset();
+        $("#frmEdit").validate().resetForm();
+    })
+
+    $("#mdDeposit").on("hidden.bs.modal", function () {
+        $("#mdDeposit .modal-alert-danger").empty();
+        $("#mdDeposit .modal-alert-danger").addClass("hide");
+        $("#mdDeposit .modal-alert-danger").removeClass("show");
+        $("#frmDeposit input.error").removeClass("error");
+        $("#frmDeposit")[0].reset();
+        $("#frmDeposit").validate().resetForm();
+    })
+
+    $("#mdWithdraw").on("hidden.bs.modal", function () {
+        $("#mdWithdraw .modal-alert-danger").empty();
+        $("#mdWithdraw .modal-alert-danger").addClass("hide");
+        $("#mdWithdraw .modal-alert-danger").removeClass("show");
+        $("#frmDeposit input.error").removeClass("error");
+        $("#frmWithdraw")[0].reset();
+        $("#frmWithdraw").validate().resetForm();
+    })
+
+    $("#mdTransfer").on("hidden.bs.modal", function () {
+        $("#mdTransfer .modal-alert-danger").empty();
+        $("#mdTransfer .modal-alert-danger").addClass("hide");
+        $("#mdTransfer .modal-alert-danger").removeClass("show");
+        $("#frmTransfer input.error").removeClass("error");
+        $("#frmTransfer")[0].reset();
+        $("#frmTransfer").validate().resetForm();
+    })
+
+    loadCustomers();
+
+</script>
+
+</body>
+
+</html>

@@ -1,7 +1,7 @@
 package com.banking.repository;
 
 
-import com.banking.dto.CustomerDTO;
+import com.banking.model.dto.CustomerDTO;
 import com.banking.model.Customer;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -11,7 +11,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import javax.transaction.Transactional;
-import java.math.BigDecimal;
 import java.util.List;
 
 @Repository
@@ -30,13 +29,13 @@ public interface ICustomerRepository extends JpaRepository<Customer, Long> {
     List<CustomerDTO> findAllDTO();
 
     @Query("SELECT NEW com.banking.dto.CustomerDTO (" +
-            "c.id, " +
-            "c.fullName, " +
-            "c.email, " +
-            "c.phone, " +
-            "c.address, " +
-            "c.balance, " +
-            "c.deleted) " +
+                "c.id, " +
+                "c.fullName, " +
+                "c.email, " +
+                "c.phone, " +
+                "c.address, " +
+                "c.balance, " +
+                "c.deleted) " +
             "FROM Customer c " +
             "WHERE c.id = :id")
     CustomerDTO findCustomerDTOById(@Param("id") long id);
@@ -54,12 +53,7 @@ public interface ICustomerRepository extends JpaRepository<Customer, Long> {
             "WHERE c.id = :id")
     void suspendCustomer(@Param("id") long id);
 
-    @Query("SELECT NEW com.banking.dto.CustomerDTO (" +
-            "c.id, " +
-            "c.fullName) " +
-            "FROM Customer c " +
-            "WHERE c.id <> :id AND c.deleted = FALSE")
-    CustomerDTO findRecipient(@Param("id") long id);
+    List<Customer> findAllByIdIsNotAndDeletedFalse(long id);
 
     boolean existsByEmail(String email);
 

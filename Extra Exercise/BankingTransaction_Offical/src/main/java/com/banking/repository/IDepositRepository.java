@@ -12,6 +12,7 @@ import javax.transaction.Transactional;
 import java.math.BigDecimal;
 
 @Repository
+@Transactional
 public interface IDepositRepository extends JpaRepository<Deposit, Long> {
 
     @Modifying

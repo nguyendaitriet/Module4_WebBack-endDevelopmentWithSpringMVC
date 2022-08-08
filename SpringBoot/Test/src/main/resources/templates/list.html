@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>List of customers</title>
+    <th:block th:replace="/layout/head :: head"></th:block>
+</head>
+
+<body>
+<div class="container">
+    <div class="table-title">
+        <div class="row">
+            <div class="col-sm-5">
+                <h1>List Cities</h1>
+            </div>
+            <div class="col-sm-7">
+                <a href="/cities/create" class="btn btn-outline-light">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Add New City</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <table class="table table-hover table-borderless">
+            <thead>
+            <tr>
+                <th>#</th>
+                <th>City Name</th>
+                <th>Nation</th>
+                <th colspan="2" class="text-center">Action</th>
+            </tr>
+            </thead>
+            <tbody id="tbCity">
+                <th:block th:each="city, status : ${cityList}">
+                    <tr>
+                        <td th:text="${status.count}"></td>
+                        <td th:text="${city.cityName}"></td>
+                        <td th:text="${city.nation.nationName}"></td>
+                        <td class="text-center">
+                            <a title="Edit" th:href="@{/cities/edit/{id}(id=${city.id})}" class="btn btn-outline-primary">
+                                <i class="fas fa-user-edit"></i>
+                            </a>
+                            <a title="Suspend" th:href="@{/cities/suspend/{id}(id=${city.id})}" class="btn btn-outline-danger">
+                                <i class="fas fa-ban"></i>
+                            </a>
+                        </td>
+                    </tr>
+                </th:block>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<th:block th:replace="/layout/script :: script"></th:block>
+
+</body>
+</html>

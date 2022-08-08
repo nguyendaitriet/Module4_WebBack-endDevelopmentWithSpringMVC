@@ -1,6 +1,6 @@
 package com.banking.service;
 
-import com.banking.dto.CustomerDTO;
+import com.banking.model.dto.CustomerDTO;
 import com.banking.model.Customer;
 
 import java.util.List;
@@ -26,5 +26,7 @@ public interface ICustomerService extends IGeneralService<Customer> {
     boolean existsByPhoneAndIdIsNot(String phone, long id);
 
     boolean existsByEmailAndIdIsNot(String email, long id);
+
+    List<Customer> findAllByIdIsNotAndDeletedFalse(long id);
 
 }

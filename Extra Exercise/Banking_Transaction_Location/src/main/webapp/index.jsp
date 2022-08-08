@@ -1,0 +1,6 @@
+<html>
+<body>
+<script>
+    window.location.href = "/login";
+</script></body>
+</html>

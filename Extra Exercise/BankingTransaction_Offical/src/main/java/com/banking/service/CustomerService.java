@@ -1,6 +1,6 @@
 package com.banking.service;
 
-import com.banking.dto.CustomerDTO;
+import com.banking.model.dto.CustomerDTO;
 import com.banking.model.Customer;
 import com.banking.repository.ICustomerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,6 +59,7 @@ public class CustomerService implements ICustomerService {
     public void remove(Long id) {
         customerRepository.deleteById(id);
     }
+
     @Override
     public boolean existsByIdAndDeletedFalse(long id) {
         return customerRepository.existsByIdAndDeletedFalse(id);
@@ -87,6 +88,11 @@ public class CustomerService implements ICustomerService {
     @Override
     public boolean existsByEmailAndIdIsNot(String email, long id) {
         return customerRepository.existsByEmailAndIdIsNot(email,id);
+    }
+
+    @Override
+    public List<Customer> findAllByIdIsNotAndDeletedFalse(long id){
+        return customerRepository.findAllByIdIsNotAndDeletedFalse(id);
     }
 
 }
